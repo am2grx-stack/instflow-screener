@@ -116,7 +116,7 @@ let currentSort = 'perf52w';
 
 async function fetchStock(ticker) {
   try {
-    const url = `https://api.allorigins.win/get?disableCache=true&url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1y`)}`;
+    const url = 'https://api.allorigins.win/get?disableCache=true&url=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '?interval=1d&range=1y');
     const res = await fetch(url);
     const data = await res.json();
     const parsed = JSON.parse(data.contents);
@@ -126,21 +126,9 @@ async function fetchStock(ticker) {
     const lastClose = closes[closes.length - 1];
     const perf52w = ((lastClose - firstClose) / firstClose) * 100;
     const change = ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose) * 100;
-
-    // RSI calculado con últimos 14 días
     const rsi = calcRSI(closes.slice(-15));
-
-    return {
-      ticker,
-      name: meta.longName || ticker,
-      sector: meta.sector || '—',
-      price: meta.regularMarketPrice,
-      change,
-      perf52w,
-      marketCap: meta.marketCap || 0,
-      rsi,
-    };
-  } catch {
+    return { ticker, name: meta.longName || ticker, sector: meta.sector || '—', price: meta.regularMarketPrice, change: change, perf52w: perf52w, marketCap: meta.marketCap || 0, rsi: rsi };
+  } catch(e) {
     return null;
   }
 }
@@ -149,7 +137,7 @@ function calcRSI(closes) {
   if (closes.length < 15) return 50;
   let gains = 0, losses = 0;
   for (let i = 1; i < closes.length; i++) {
-    const diff = closes[i] - closes[i - 1];
+    const diff = closes[i] - closes[i-1];
     if (diff > 0) gains += diff;
     else losses += Math.abs(diff);
   }
@@ -172,14 +160,15 @@ function getSignal(s) {
 }
 
 function getSignalLabel(s) {
-  return { strong: 'FUERTE', medium: 'MEDIO', caution: 'EXTENDIDA', weak: 'DÉBIL' }[s];
+  var labels = { strong: 'FUERTE', medium: 'MEDIO', caution: 'EXTENDIDA', weak: 'DÉBIL' };
+  return labels[s];
 }
 
 function formatCap(n) {
   if (!n) return '—';
-  if (n >= 1e12) return `$${(n / 1e12).toFixed(1)}T`;
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
-  return `$${(n / 1e6).toFixed(0)}M`;
+  if (n >= 1e12) return '$' + (n/1e12).toFixed(1) + 'T';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  return '$' + (n/1e6).toFixed(0) + 'M';
 }
 
 function colorPerf(p) {
@@ -191,90 +180,78 @@ function colorPerf(p) {
 
 function applyFilters() {
   const sector = document.getElementById('sector').value;
-  const perf = +document.getElementById('perf').value;
-  const rsiMin = +document.getElementById('rsiMin').value;
-  const rsiMax = +document.getElementById('rsiMax').value;
-
-  return allStocks.filter(s => {
+  const perf = Number(document.getElementById('perf').value);
+  const rsiMin = Number(document.getElementById('rsiMin').value);
+  const rsiMax = Number(document.getElementById('rsiMax').value);
+  return allStocks.filter(function(s) {
     if (sector && s.sector !== sector) return false;
     if (s.perf52w < perf) return false;
     if (s.rsi < rsiMin || s.rsi > rsiMax) return false;
     return true;
-  }).sort((a, b) => b[currentSort] - a[currentSort]);
+  }).sort(function(a, b) { return b[currentSort] - a[currentSort]; });
 }
 
 function render() {
   const stocks = applyFilters();
   document.getElementById('count').textContent = stocks.length;
-
   if (stocks.length === 0) {
     document.getElementById('output').innerHTML = '<div class="loading">SIN RESULTADOS — AJUSTA LOS FILTROS</div>';
     return;
   }
-
-  document.getElementById('output').innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <td>Ticker</td>
-          <td>Nombre</td>
-          <td style="text-align:right">Precio</td>
-          <td style="text-align:right">Hoy</td>
-          <td style="text-align:right">52 sem.</td>
-          <td style="text-align:right">RSI</td>
-          <td style="text-align:right">Market Cap</td>
-          <td>Señal</td>
-        </tr>
-      </thead>
-      <tbody>
-        ${stocks.map(s => {
-          const sig = getSignal(s);
-          return `
-          <tr>
-            <td class="ticker">${s.ticker}</td>
-            <td class="name">${s.name}</td>
-            <td style="text-align:right">$${s.price?.toFixed(2)}</td>
-            <td style="text-align:right" class="${s.change > 0 ? 'green' : 'red'}">
-              ${s.change > 0 ? '+' : ''}${s.change?.toFixed(2)}%
-            </td>
-            <td style="text-align:right" class="${colorPerf(s.perf52w)}">
-              ${s.perf52w > 0 ? '+' : ''}${s.perf52w?.toFixed(1)}%
-            </td>
-            <td style="text-align:right;color:${s.rsi > 70 ? '#ff7800' : '#c8d8e8'}">${s.rsi}</td>
-            <td style="text-align:right;color:#556677">${formatCap(s.marketCap)}</td>
-            <td><span class="badge ${sig}">${getSignalLabel(sig)}</span></td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
+  var rows = '';
+  for (var i = 0; i < stocks.length; i++) {
+    var s = stocks[i];
+    var sig = getSignal(s);
+    rows += '<tr>' +
+      '<td class="ticker">' + s.ticker + '</td>' +
+      '<td class="name">' + s.name + '</td>' +
+      '<td style="text-align:right">$' + (s.price ? s.price.toFixed(2) : '—') + '</td>' +
+      '<td style="text-align:right" class="' + (s.change > 0 ? 'green' : 'red') + '">' + (s.change > 0 ? '+' : '') + (s.change ? s.change.toFixed(2) : '0') + '%</td>' +
+      '<td style="text-align:right" class="' + colorPerf(s.perf52w) + '">' + (s.perf52w > 0 ? '+' : '') + (s.perf52w ? s.perf52w.toFixed(1) : '0') + '%</td>' +
+      '<td style="text-align:right;color:' + (s.rsi > 70 ? '#ff7800' : '#c8d8e8') + '">' + s.rsi + '</td>' +
+      '<td style="text-align:right;color:#556677">' + formatCap(s.marketCap) + '</td>' +
+      '<td><span class="badge ' + sig + '">' + getSignalLabel(sig) + '</span></td>' +
+      '</tr>';
+  }
+  document.getElementById('output').innerHTML = '<table><thead><tr><td>Ticker</td><td>Nombre</td><td style="text-align:right">Precio</td><td style="text-align:right">Hoy</td><td style="text-align:right">52 sem.</td><td style="text-align:right">RSI</td><td style="text-align:right">Market Cap</td><td>Señal</td></tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
 function sortTable(key, e) {
   currentSort = key;
-  document.querySelectorAll('.sort').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sort').forEach(function(b) { b.classList.remove('active'); });
   e.target.classList.add('active');
   render();
 }
 
-async function loadData() {   document.getElementById('output').innerHTML = '<div class="loading">CARGANDO DATOS...</div>';   document.getElementById('count').textContent = '—';   allStocks = [];    const grupos = [];   for (let i = 0; i < TICKERS.length; i += 4) {     grupos.push(TICKERS.slice(i, i + 4));   }    for (const grupo of grupos) {     const results = await Promise.all(grupo.map(fetchStock));     const validos = results.filter(Boolean);     allStocks = allStocks.concat(validos);     render();     await new Promise(function(r) { setTimeout(r, 1500); });   } }  window.loadData = loadData;   document.getElementById('output').innerHTML = '<div class="loading">CARGANDO DATOS...</div>';   document.getElementById('count').textContent = '—';   allStocks = [];    const grupos = [];   for (let i = 0; i < TICKERS.length; i += 4) {     grupos.push(TICKERS.slice(i, i + 4));   }    for (const grupo of grupos) {     const results = await Promise.all(grupo.map(fetchStock));     const validos = results.filter(Boolean);     allStocks = [...allStocks, ...validos];     render();     await new Promise(r => setTimeout(r, 1500));   } }
-  document.getElementById('output').innerHTML = '<div class="loading">CARGANDO DATOS REALES...</div>';
+function loadData() {
+  document.getElementById('output').innerHTML = '<div class="loading">CARGANDO DATOS...</div>';
   document.getElementById('count').textContent = '—';
-  const results = await Promise.all(TICKERS.map(fetchStock));
-  allStocks = results.filter(Boolean);
-  render();
+  allStocks = [];
+  var index = 0;
+
+  function loadNext() {
+    if (index >= TICKERS.length) return;
+    var grupo = TICKERS.slice(index, index + 4);
+    index += 4;
+    Promise.all(grupo.map(fetchStock)).then(function(results) {
+      results.filter(Boolean).forEach(function(s) { allStocks.push(s); });
+      render();
+      setTimeout(loadNext, 1500);
+    });
+  }
+
+  loadNext();
 }
 
-['sector','perf','rsiMin','rsiMax'].forEach(id => {
-  document.getElementById(id).addEventListener('input', e => {
-    const units = { perf: '%' };
-    const el = document.getElementById('v-' + id);
-    if (el) el.textContent = e.target.value + (units[id] || '');
-    render();
-  });
-});
+window.sortTable = sortTable;
+window.loadData = loadData;
 
-window.loadData();
+document.getElementById('sector').addEventListener('input', function(e) { render(); });
+document.getElementById('perf').addEventListener('input', function(e) { document.getElementById('v-perf').textContent = e.target.value + '%'; render(); });
+document.getElementById('rsiMin').addEventListener('input', function(e) { document.getElementById('v-rsiMin').textContent = e.target.value; render(); });
+document.getElementById('rsiMax').addEventListener('input', function(e) { document.getElementById('v-rsiMax').textContent = e.target.value; render(); });
+
+loadData();
 </script>
 </body>
 </html>
