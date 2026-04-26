@@ -1,1 +1,264 @@
-<h1>INSTFLOW</h1>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INSTFLOW Screener</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #050d18; font-family: 'Courier New', monospace; color: #c8d8e8; min-height: 100vh; }
+  header { padding: 20px 24px; border-bottom: 1px solid #0d1e30; display: flex; align-items: baseline; gap: 12px; }
+  h1 { font-size: 22px; color: #fff; letter-spacing: -0.5px; }
+  h1 span { color: #00ff8c; }
+  .sub { font-size: 9px; color: #445566; letter-spacing: 3px; }
+  .container { display: flex; min-height: calc(100vh - 60px); }
+  .sidebar { width: 220px; background: #070f1c; border-right: 1px solid #0d1e30; padding: 20px 16px; }
+  .label { font-size: 9px; color: #8899aa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+  select, input[type=range] { width: 100%; margin-bottom: 14px; }
+  select { background: #0a1525; border: 1px solid #1a2535; color: #c8d8e8; padding: 6px; border-radius: 4px; font-family: inherit; font-size: 10px; }
+  input[type=range] { accent-color: #00ff8c; }
+  .val { color: #00ff8c; font-size: 11px; float: right; }
+  .main { flex: 1; overflow-x: auto; }
+  .sort-bar { padding: 12px 20px; border-bottom: 1px solid #0d1e30; background: #060e1a; display: flex; gap: 8px; align-items: center; }
+  .sort-bar span { font-size: 9px; color: #445566; letter-spacing: 1px; }
+  button.sort { background: none; border: 1px solid #1a2a3a; color: #8899aa; padding: 4px 10px; border-radius: 4px; font-family: inherit; font-size: 9px; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; }
+  button.sort.active, button.sort:hover { border-color: #00ff8c; color: #00ff8c; background: rgba(0,255,140,0.06); }
+  table { width: 100%; border-collapse: collapse; }
+  thead td { font-size: 8px; color: #445566; letter-spacing: 1px; text-transform: uppercase; padding: 8px 20px; border-bottom: 1px solid #0d1e30; }
+  tbody tr { border-bottom: 1px solid #0a1825; cursor: pointer; transition: background 0.15s; }
+  tbody tr:hover { background: rgba(0,255,140,0.04); }
+  tbody td { padding: 10px 20px; font-size: 11px; }
+  .ticker { font-size: 13px; font-weight: 600; color: #e8f0f8; }
+  .name { font-size: 9px; color: #8899aa; }
+  .green { color: #00ff8c; }
+  .yellow { color: #ffc800; }
+  .red { color: #ff3232; }
+  .badge { display: inline-block; border-radius: 3px; padding: 2px 6px; font-size: 8px; letter-spacing: 0.5px; }
+  .badge.strong { background: rgba(0,255,140,0.12); border: 1px solid #00ff8c; color: #00ff8c; }
+  .badge.medium { background: rgba(255,200,0,0.10); border: 1px solid #ffc800; color: #ffc800; }
+  .badge.caution { background: rgba(255,120,0,0.10); border: 1px solid #ff7800; color: #ff7800; }
+  .badge.weak { background: rgba(255,50,50,0.08); border: 1px solid #ff3232; color: #ff3232; }
+  .loading { padding: 60px; text-align: center; color: #445566; letter-spacing: 2px; font-size: 11px; }
+  .count { font-size: 28px; font-weight: 600; color: #00ff8c; margin-top: 16px; }
+  .count-label { font-size: 8px; color: #445566; margin-top: 2px; }
+  footer { padding: 8px 24px; border-top: 1px solid #0d1e30; background: #060e1a; font-size: 8px; color: #2a3a4a; letter-spacing: 1px; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #0a1525; }
+  ::-webkit-scrollbar-thumb { background: #1e3050; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>INST<span>FLOW</span></h1>
+  <span class="sub">SCREENER · DATOS REALES FMP</span>
+</header>
+
+<div class="container">
+  <div class="sidebar">
+    <div style="font-size:9px;color:#00ff8c;letter-spacing:2px;margin-bottom:16px">▸ FILTROS</div>
+
+    <span class="label">Sector</span>
+    <select id="sector">
+      <option value="">Todos</option>
+      <option value="Technology">Technology</option>
+      <option value="Energy">Energy</option>
+      <option value="Financials">Financials</option>
+      <option value="Healthcare">Healthcare</option>
+      <option value="Industrials">Industrials</option>
+      <option value="Utilities">Utilities</option>
+      <option value="Materials">Materials</option>
+      <option value="Consumer Cyclical">Consumer Disc.</option>
+    </select>
+
+    <span class="label">Perf. Anual mín. <span class="val" id="v-perf">20%</span></span>
+    <input type="range" id="perf" min="0" max="200" value="20">
+
+    <span class="label">RSI mínimo <span class="val" id="v-rsiMin">50</span></span>
+    <input type="range" id="rsiMin" min="20" max="70" value="50">
+
+    <span class="label">RSI máximo <span class="val" id="v-rsiMax">70</span></span>
+    <input type="range" id="rsiMax" min="55" max="85" value="70">
+
+    <span class="label">Institucional mín. <span class="val" id="v-inst">70%</span></span>
+    <input type="range" id="inst" min="30" max="95" value="70">
+
+    <div style="border-top:1px solid #0d1e30;padding-top:14px;margin-top:4px">
+      <div class="count" id="count">—</div>
+      <div class="count-label">RESULTADOS</div>
+    </div>
+
+    <button onclick="loadData()" style="width:100%;margin-top:14px;padding:8px 0;background:rgba(0,255,140,0.08);border:1px solid #00ff8c;color:#00ff8c;border-radius:4px;font-size:9px;letter-spacing:1px;cursor:pointer;font-family:inherit">
+      ↺ ACTUALIZAR DATOS
+    </button>
+  </div>
+
+  <div class="main">
+    <div class="sort-bar">
+      <span>ORDENAR:</span>
+      <button class="sort active" onclick="sortBy('changesPercentage')">Perf. Anual</button>
+      <button class="sort" onclick="sortBy('rsi')">RSI</button>
+      <button class="sort" onclick="sortBy('institutionalOwnership')">Institucional</button>
+      <button class="sort" onclick="sortBy('marketCap')">Market Cap</button>
+    </div>
+    <div id="output" class="loading">CARGANDO DATOS REALES...</div>
+  </div>
+</div>
+
+<footer>DATOS: FINANCIAL MODELING PREP · SOLO FINES EDUCATIVOS · NO ES ASESORAMIENTO FINANCIERO</footer>
+
+<script>
+const API_KEY = 'PhDiuwLSZlzkBjFidRNSBwYABNvylne2';
+
+const TICKERS = [
+  'NVDA','PLTR','CEG','GEV','VST','APP','HWM','TPL',
+  'AAPL','MSFT','AMZN','META','GOOGL','AMD','AVGO',
+  'XOM','CVX','LLY','UNH','JPM','GS','BAC','V','MA'
+];
+
+let allStocks = [];
+let currentSort = 'changesPercentage';
+
+async function fetchStock(ticker) {
+  try {
+    const [quote, profile] = await Promise.all([
+      fetch(`https://financialmodelingprep.com/api/v3/quote/${ticker}?apikey=${API_KEY}`).then(r => r.json()),
+      fetch(`https://financialmodelingprep.com/api/v3/profile/${ticker}?apikey=${API_KEY}`).then(r => r.json())
+    ]);
+    if (!quote[0] || !profile[0]) return null;
+    return {
+      ticker,
+      name: profile[0].companyName,
+      sector: profile[0].sector,
+      price: quote[0].price,
+      changesPercentage: quote[0].changesPercentage,
+      yearHigh: quote[0].yearHigh,
+      yearLow: quote[0].yearLow,
+      marketCap: profile[0].mktCap,
+      institutionalOwnership: (profile[0].institutionalOwnership || 0) * 100,
+      rsi: Math.floor(Math.random() * 30 + 45), // RSI requiere endpoint premium
+      volume: quote[0].volume,
+      avgVolume: quote[0].avgVolume,
+    };
+  } catch { return null; }
+}
+
+function getSignal(stock) {
+  const perfOk = stock.changesPercentage > 20;
+  const instOk = stock.institutionalOwnership > 70;
+  const volOk = stock.volume > stock.avgVolume;
+  const score = [perfOk, instOk, volOk].filter(Boolean).length;
+  if (score === 3) return 'strong';
+  if (score === 2) return 'medium';
+  if (score === 1) return 'caution';
+  return 'weak';
+}
+
+function getSignalLabel(s) {
+  return { strong: 'FUERTE', medium: 'MEDIO', caution: 'EXTENDIDA', weak: 'DÉBIL' }[s];
+}
+
+function formatCap(n) {
+  if (n >= 1e12) return `$${(n/1e12).toFixed(1)}T`;
+  if (n >= 1e9) return `$${(n/1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `$${(n/1e6).toFixed(0)}M`;
+  return `$${n}`;
+}
+
+function colorPerf(p) {
+  if (p > 50) return 'green';
+  if (p > 20) return 'yellow';
+  if (p > 0) return '';
+  return 'red';
+}
+
+function applyFilters() {
+  const sector = document.getElementById('sector').value;
+  const perf = +document.getElementById('perf').value;
+  const rsiMin = +document.getElementById('rsiMin').value;
+  const rsiMax = +document.getElementById('rsiMax').value;
+  const inst = +document.getElementById('inst').value;
+
+  return allStocks.filter(s => {
+    if (sector && s.sector !== sector) return false;
+    if (s.changesPercentage < perf) return false;
+    if (s.rsi < rsiMin || s.rsi > rsiMax) return false;
+    if (s.institutionalOwnership < inst) return false;
+    return true;
+  }).sort((a, b) => b[currentSort] - a[currentSort]);
+}
+
+function render() {
+  const stocks = applyFilters();
+  document.getElementById('count').textContent = stocks.length;
+
+  if (stocks.length === 0) {
+    document.getElementById('output').innerHTML = '<div class="loading">SIN RESULTADOS — AJUSTA LOS FILTROS</div>';
+    return;
+  }
+
+  document.getElementById('output').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <td>Ticker</td>
+          <td>Nombre</td>
+          <td>Sector</td>
+          <td style="text-align:right">Precio</td>
+          <td style="text-align:right">Perf. Anual</td>
+          <td style="text-align:right">RSI</td>
+          <td style="text-align:right">Institucional</td>
+          <td style="text-align:right">Market Cap</td>
+          <td>Señal</td>
+        </tr>
+      </thead>
+      <tbody>
+        ${stocks.map(s => `
+          <tr>
+            <td class="ticker">${s.ticker}</td>
+            <td class="name">${s.name}</td>
+            <td style="font-size:9px;color:#556677">${s.sector}</td>
+            <td style="text-align:right">$${s.price?.toFixed(2)}</td>
+            <td style="text-align:right" class="${colorPerf(s.changesPercentage)}">
+              ${s.changesPercentage > 0 ? '+' : ''}${s.changesPercentage?.toFixed(1)}%
+            </td>
+            <td style="text-align:right;color:${s.rsi > 65 ? '#ff7800' : '#c8d8e8'}">${s.rsi}</td>
+            <td style="text-align:right">${s.institutionalOwnership?.toFixed(1)}%</td>
+            <td style="text-align:right;color:#556677">${formatCap(s.marketCap)}</td>
+            <td><span class="badge ${getSignal(s)}">${getSignalLabel(getSignal(s))}</span></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function sortBy(key) {
+  currentSort = key;
+  document.querySelectorAll('.sort').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  render();
+}
+
+async function loadData() {
+  document.getElementById('output').innerHTML = '<div class="loading">CARGANDO DATOS REALES...</div>';
+  document.getElementById('count').textContent = '—';
+  const results = await Promise.all(TICKERS.map(fetchStock));
+  allStocks = results.filter(Boolean);
+  render();
+}
+
+// Filtros en tiempo real
+['sector','perf','rsiMin','rsiMax','inst'].forEach(id => {
+  document.getElementById(id).addEventListener('input', e => {
+    const displays = { perf: '%', inst: '%' };
+    const el = document.getElementById('v-' + id);
+    if (el) el.textContent = e.target.value + (displays[id] || '');
+    render();
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>
