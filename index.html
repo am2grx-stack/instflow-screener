@@ -116,7 +116,7 @@ let currentSort = 'perf52w';
 
 async function fetchStock(ticker) {
   try {
-    const url = `https://allorigins.win/get?disableCache=true&url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1y`)}`;
+    const url = `https://api.allorigins.win/get?disableCache=true&url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1y`)}`;
     const res = await fetch(url);
     const data = await res.json();
     const parsed = JSON.parse(data.contents);
