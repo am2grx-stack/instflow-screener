@@ -257,7 +257,7 @@ function sortTable(key, e) {
   render();
 }
 
-async function loadData() {
+async function loadData() {   document.getElementById('output').innerHTML = '<div class="loading">CARGANDO DATOS...</div>';   document.getElementById('count').textContent = '—';   allStocks = [];    const grupos = [];   for (let i = 0; i < TICKERS.length; i += 4) {     grupos.push(TICKERS.slice(i, i + 4));   }    for (const grupo of grupos) {     const results = await Promise.all(grupo.map(fetchStock));     const validos = results.filter(Boolean);     allStocks = [...allStocks, ...validos];     render();     await new Promise(r => setTimeout(r, 1500));   } }
   document.getElementById('output').innerHTML = '<div class="loading">CARGANDO DATOS REALES...</div>';
   document.getElementById('count').textContent = '—';
   const results = await Promise.all(TICKERS.map(fetchStock));
